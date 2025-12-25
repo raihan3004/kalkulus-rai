@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Lengkap - Raihan Ahmad</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #2563eb; --secondary: #10b981; --accent: #f59e0b; --dark: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; width: 100%; max-width: 700px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .header { text-align: center; border-bottom: 2px solid #f1f5f9; margin-bottom: 20px; padding-bottom: 10px; }
+        .header h1 { margin: 0; color: var(--dark); font-size: 1.6rem; }
+        .info { color: #64748b; font-size: 0.9rem; margin: 5px 0; }
+
+        /* Panel Aritmatika */
+        .panel-basic { background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .grid-basic { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        
+        /* Panel Kalkulus */
+        .panel-calculus { border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        
+        label { font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        .btn-group { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; min-width: 50px; }
+        
+        .btn-op { background: var(--accent); }
+        .btn-diff { background: var(--primary); }
+        .btn-int { background: var(--secondary); }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+
+        .result-box { background: var(--dark); color: #38bdf8; padding: 15px; border-radius: 8px; margin-top: 15px; font-family: 'Courier New', monospace; font-size: 1.2rem; min-height: 1.5rem; }
+        
+        canvas { margin-top: 20px; background: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Kalkulator Saintifik & Kalkulus</h1>
+        <div class="info">
+            <strong>Raihan Ahmad Firdaus Rukmana</strong> | NIM: 411251096
+        </div>
+    </div>
+
+    <div class="panel-basic">
+        <label>Operasi Dasar (Tambah, Kurang, Kali, Bagi):</label>
+        <div class="grid-basic">
+            <input type="number" id="num1" placeholder="Angka 1">
+            <input type="number" id="num2" placeholder="Angka 2">
+        </div>
+        <div class="btn-group">
+            <button class="btn-op" onclick="hitungDasar('+')">+</button>
+            <button class="btn-op" onclick="hitungDasar('-')">-</button>
+            <button class="btn-op" onclick="hitungDasar('*')">×</button>
+            <button class="btn-op" onclick="hitungDasar('/')">÷</button>
+        </div>
+    </div>
+
+    <div class="panel-calculus">
+        <label>Fungsi Kalkulus f(x) (sin, cos, x^2, dll):</label>
+        <input type="text" id="formula" value="sin(x)" placeholder="Contoh: 2*x^2 + cos(x)">
+        <div class="btn-group">
+            <button class="btn-diff" onclick="prosesKalkulus('turunan')">Turunan</button>
+            <button class="btn-int" onclick="prosesKalkulus('integral')">Integral</button>
+        </div>
+    </div>
+
+    <div class="result-box" id="output">Hasil akan muncul di sini...</div>
+
+    <canvas id="myChart"></canvas>
+</div>
+
+<script>
+    let myChart;
+
+    // Fungsi Aritmatika Dasar
+    function hitungDasar(operator) {
+        const n1 = parseFloat(document.getElementById('num1').value);
+        const n2 = parseFloat(document.getElementById('num2').value);
+        const out = document.getElementById('output');
+
+        if (isNaN(n1) || isNaN(n2)) {
+            out.innerText = "Error: Masukkan angka!";
+            return;
+        }
+
+        let hasil;
+        switch(operator) {
+            case '+': hasil = n1 + n2; break;
+            case '-': hasil = n1 - n2; break;
+            case '*': hasil = n1 * n2; break;
+            case '/': hasil = n2 !== 0 ? n1 / n2 : "Tak Terhingga"; break;
+        }
+        out.innerText = `Hasil: ${hasil}`;
+    }
+
+    // Fungsi Kalkulus & Grafik
+    function prosesKalkulus(tipe) {
+        const formula = document.getElementById('formula').value;
+        const out = document.getElementById('output');
+        
+        try {
+            if (tipe === 'turunan') {
+                const turunan = math.derivative(formula, 'x').toString();
+                out.innerText = `f'(x) = ${turunan}`;
+            } else {
+                out.innerText = `Integral dari ${formula} divisualisasikan pada grafik.`;
+            }
+            updateChart(formula);
+        } catch (e) {
+            out.innerText = "Error: Format fungsi salah!";
+        }
+    }
+
+    function updateChart(formula) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const xValues = [];
+        const yValues = [];
+
+        for (let x = -10; x <= 10; x += 0.2) {
+            xValues.push(x.toFixed(1));
+            try {
+                yValues.push(math.evaluate(formula, {x: x}));
+            } catch (e) { yValues.push(null); }
+        }
+
+        if (myChart) myChart.destroy();
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: xValues,
+                datasets: [{
+                    label: 'f(x) = ' + formula,
+                    data: yValues,
+                    borderColor: '#2563eb',
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+
+    window.onload = () => updateChart('sin(x)');
+</script>
+
+</body>
+</html>
